@@ -311,9 +311,75 @@ VITE_WIDGET_URL=http://localhost:3001
 - [ ] Performance testing (pendente)
 - [ ] Security testing (pendente)
 
-#### Fase 5: Deploy e Produção (Pendente)
-- [ ] Configuração de CI/CD
-- [ ] Deploy no Railway/Heroku
+#### Fase 5: Deploy e Produção - EM ANDAMENTO
+- [x] **Repositório GitHub**: https://github.com/nftecnologia/supkvn-saas
+- [x] **Configuração de produção**: PostgreSQL, enums, Railway.toml
+- [x] **Scripts de deploy**: Build e start otimizados para Railway
+- [x] **Variáveis de ambiente**: Configuradas para produção
+- [ ] Deploy no Railway (manual - instruções abaixo)
 - [ ] Configuração de domínio
 - [ ] Monitoramento e logs
 - [ ] Backup automatizado
+
+## 🚀 Instruções de Deploy
+
+### Deploy no Railway
+
+1. **Instalar Railway CLI** (se não tiver):
+```bash
+npm install -g @railway/cli
+```
+
+2. **Fazer login no Railway**:
+```bash
+railway login
+```
+
+3. **Conectar ao repositório**:
+```bash
+cd /caminho/para/supkvn
+railway init
+```
+
+4. **Configurar variáveis de ambiente no Railway**:
+   - Acesse https://railway.app/dashboard
+   - Selecione seu projeto
+   - Vá em "Variables" e adicione:
+   ```
+   NODE_ENV=production
+   JWT_SECRET=seu_jwt_secret_super_seguro_aqui
+   OPENAI_API_KEY=sua_chave_openai_aqui
+   FRONTEND_URL=https://seu-dominio.railway.app
+   ```
+
+5. **Deploy automático**:
+   - O Railway detectará automaticamente o repositório
+   - O build será executado conforme `railway.toml`
+   - PostgreSQL será provisionado automaticamente
+
+6. **Verificar deploy**:
+```bash
+railway status
+railway logs
+```
+
+### Deploy do Frontend (Vercel)
+
+1. **Conectar repositório no Vercel**:
+   - Acesse https://vercel.com
+   - Conecte o repositório GitHub
+   - Configure Build Settings:
+     - Build Command: `cd frontend && npm run build`
+     - Output Directory: `frontend/dist`
+
+2. **Configurar variáveis de ambiente**:
+   ```
+   VITE_API_URL=https://seu-backend.railway.app
+   VITE_SOCKET_URL=wss://seu-backend.railway.app
+   ```
+
+### URLs do Projeto
+- **Repositório**: https://github.com/nftecnologia/supkvn-saas
+- **Backend (Railway)**: https://supkvn-saas-backend.railway.app (será gerado)
+- **Frontend (Vercel)**: https://supkvn-saas.vercel.app (será gerado)
+- **Documentação**: Ver CLAUDE.md no repositório
