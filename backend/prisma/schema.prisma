@@ -6,7 +6,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -50,11 +50,11 @@ model Client {
 }
 
 model Conversation {
-  id          String    @id @default(cuid())
-  type        String    // CHAT, EMAIL
-  status      String    @default("OPEN") // OPEN, IN_PROGRESS, CLOSED, ARCHIVED
+  id          String              @id @default(cuid())
+  type        ConversationType    // CHAT, EMAIL
+  status      ConversationStatus  @default(OPEN) // OPEN, IN_PROGRESS, CLOSED, ARCHIVED
   subject     String?
-  priority    String    @default("MEDIUM") // LOW, MEDIUM, HIGH, URGENT
+  priority    Priority            @default(MEDIUM) // LOW, MEDIUM, HIGH, URGENT
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   closedAt    DateTime?
@@ -70,16 +70,16 @@ model Conversation {
 }
 
 model Message {
-  id              String      @id @default(cuid())
+  id              String        @id @default(cuid())
   content         String
-  type            String      @default("TEXT") // TEXT, FILE, IMAGE, AUDIO, VIDEO
-  sender          String      // USER, AGENT, AI, SYSTEM
+  type            MessageType   @default(TEXT) // TEXT, FILE, IMAGE, AUDIO, VIDEO
+  sender          MessageSender // USER, AGENT, AI, SYSTEM
   senderName      String?
   senderEmail     String?
-  isFromAI        Boolean     @default(false)
-  attachments     String?     // JSON as string
-  metadata        String?     // JSON as string
-  createdAt       DateTime    @default(now())
+  isFromAI        Boolean       @default(false)
+  attachments     Json?         // JSON field
+  metadata        Json?         // JSON field
+  createdAt       DateTime      @default(now())
   
   // Foreign Keys
   conversationId  String
@@ -99,11 +99,11 @@ model Email {
   fromName    String?
   toEmail     String
   toName      String?
-  ccEmails    String?     // JSON as string
-  bccEmails   String?     // JSON as string
-  status      String      @default("RECEIVED") // RECEIVED, READ, REPLIED, FORWARDED, ARCHIVED, DELETED
-  priority    String      @default("MEDIUM") // LOW, MEDIUM, HIGH, URGENT
-  attachments String?     // JSON as string
+  ccEmails    Json?       // JSON field
+  bccEmails   Json?       // JSON field
+  status      EmailStatus @default(RECEIVED) // RECEIVED, READ, REPLIED, FORWARDED, ARCHIVED, DELETED
+  priority    Priority    @default(MEDIUM) // LOW, MEDIUM, HIGH, URGENT
+  attachments Json?       // JSON field
   messageId   String?     @unique
   threadId    String?
   inReplyTo   String?
@@ -120,12 +120,12 @@ model Email {
 }
 
 model KnowledgeBase {
-  id            String    @id @default(cuid())
+  id            String        @id @default(cuid())
   title         String
   content       String
-  type          String    // FAQ, DOCUMENT, TEXT, URL
+  type          KnowledgeType // FAQ, DOCUMENT, TEXT, URL
   source        String?
-  vectorData    String?   // JSON as string
+  vectorData    Json?         // JSON field
   isActive      Boolean   @default(true)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -162,10 +162,10 @@ model File {
 }
 
 model Setting {
-  id          String   @id @default(cuid())
+  id          String      @id @default(cuid())
   key         String
-  value       String   // JSON as string
-  type        String   @default("STRING") // STRING, NUMBER, BOOLEAN, JSON, ARRAY
+  value       String      // Keep as string for flexibility
+  type        SettingType @default(STRING) // STRING, NUMBER, BOOLEAN, JSON, ARRAY
   isPublic    Boolean  @default(false)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -178,4 +178,63 @@ model Setting {
   
   @@unique([clientId, key])
   @@map("settings")
+}
+
+// Enums
+enum ConversationType {
+  CHAT
+  EMAIL
+}
+
+enum ConversationStatus {
+  OPEN
+  IN_PROGRESS
+  CLOSED
+  ARCHIVED
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum MessageType {
+  TEXT
+  FILE
+  IMAGE
+  AUDIO
+  VIDEO
+}
+
+enum MessageSender {
+  USER
+  AGENT
+  AI
+  SYSTEM
+}
+
+enum EmailStatus {
+  RECEIVED
+  READ
+  REPLIED
+  FORWARDED
+  ARCHIVED
+  DELETED
+}
+
+enum KnowledgeType {
+  FAQ
+  DOCUMENT
+  TEXT
+  URL
+}
+
+enum SettingType {
+  STRING
+  NUMBER
+  BOOLEAN
+  JSON
+  ARRAY
 }
