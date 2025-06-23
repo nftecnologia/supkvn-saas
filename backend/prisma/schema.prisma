@@ -1,0 +1,181 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          String   @id @default(cuid())
+  email       String   @unique
+  password    String
+  name        String
+  avatar      String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relations
+  clients     Client[]
+  
+  @@map("users")
+}
+
+model Client {
+  id          String   @id @default(cuid())
+  name        String
+  domain      String?
+  website     String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Foreign Keys
+  userId      String
+  
+  // Relations
+  user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  conversations   Conversation[]
+  emails          Email[]
+  knowledgeBase   KnowledgeBase[]
+  files           File[]
+  settings        Setting[]
+  
+  @@map("clients")
+}
+
+model Conversation {
+  id          String    @id @default(cuid())
+  type        String    // CHAT, EMAIL
+  status      String    @default("OPEN") // OPEN, IN_PROGRESS, CLOSED, ARCHIVED
+  subject     String?
+  priority    String    @default("MEDIUM") // LOW, MEDIUM, HIGH, URGENT
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  closedAt    DateTime?
+  
+  // Foreign Keys
+  clientId    String
+  
+  // Relations
+  client      Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  messages    Message[]
+  
+  @@map("conversations")
+}
+
+model Message {
+  id              String      @id @default(cuid())
+  content         String
+  type            String      @default("TEXT") // TEXT, FILE, IMAGE, AUDIO, VIDEO
+  sender          String      // USER, AGENT, AI, SYSTEM
+  senderName      String?
+  senderEmail     String?
+  isFromAI        Boolean     @default(false)
+  attachments     String?     // JSON as string
+  metadata        String?     // JSON as string
+  createdAt       DateTime    @default(now())
+  
+  // Foreign Keys
+  conversationId  String
+  
+  // Relations
+  conversation    Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  
+  @@map("messages")
+}
+
+model Email {
+  id          String      @id @default(cuid())
+  subject     String
+  body        String
+  htmlBody    String?
+  fromEmail   String
+  fromName    String?
+  toEmail     String
+  toName      String?
+  ccEmails    String?     // JSON as string
+  bccEmails   String?     // JSON as string
+  status      String      @default("RECEIVED") // RECEIVED, READ, REPLIED, FORWARDED, ARCHIVED, DELETED
+  priority    String      @default("MEDIUM") // LOW, MEDIUM, HIGH, URGENT
+  attachments String?     // JSON as string
+  messageId   String?     @unique
+  threadId    String?
+  inReplyTo   String?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  
+  // Foreign Keys
+  clientId    String
+  
+  // Relations
+  client      Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  
+  @@map("emails")
+}
+
+model KnowledgeBase {
+  id            String    @id @default(cuid())
+  title         String
+  content       String
+  type          String    // FAQ, DOCUMENT, TEXT, URL
+  source        String?
+  vectorData    String?   // JSON as string
+  isActive      Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  // Foreign Keys
+  clientId      String
+  fileId        String?
+  
+  // Relations
+  client        Client  @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  file          File?   @relation(fields: [fileId], references: [id])
+  
+  @@map("knowledge_base")
+}
+
+model File {
+  id            String    @id @default(cuid())
+  originalName  String
+  fileName      String
+  mimeType      String
+  size          Int
+  url           String
+  isPublic      Boolean   @default(false)
+  createdAt     DateTime  @default(now())
+  
+  // Foreign Keys
+  clientId      String
+  
+  // Relations
+  client        Client          @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  knowledgeBase KnowledgeBase[]
+  
+  @@map("files")
+}
+
+model Setting {
+  id          String   @id @default(cuid())
+  key         String
+  value       String   // JSON as string
+  type        String   @default("STRING") // STRING, NUMBER, BOOLEAN, JSON, ARRAY
+  isPublic    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Foreign Keys
+  clientId    String
+  
+  // Relations
+  client      Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  
+  @@unique([clientId, key])
+  @@map("settings")
+}
